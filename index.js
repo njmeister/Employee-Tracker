@@ -75,22 +75,87 @@ addRole = () => {
             },
             {
                 type: 'list',
-                name: 'department_id',
+                name: 'department',
                 message: 'Which department does the role belong to?',
                 choices: departments
             }
         ])
         .then((answers) => {
-            connection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [answers.title, answers.salary, answers.department_id], (err, res) => {
+            connection.query('SELECT id FROM department WHERE name = ?', [answers.department], (err, res) => {
                 if (err) throw err;
-                console.log('Role added');
-                setTimeout(viewAllRoles, 1000);
+                let department_id = res[0].id;
+
+                connection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [answers.title, answers.salary, department_id], (err, res) => {
+                    if (err) throw err;
+                    console.log('Role added');
+                    setTimeout(viewAllRoles, 1000);
+                });
             });
         })
     });
 };
 
-addRole();
+addEmployee = () => {
+    connection.query('SELECT title FROM role', (err, res) => {
+        if (err) throw err;
+        
+        let roles = res.map(role => role.title);
+
+        connection.query('SELECT first_name, last_name FROM employee', (err, res) => {
+            if (err) throw err;
+
+            let managers = res.map(manager => manager.first_name + ' ' + manager.last_name);
+
+            inquirer
+                .prompt([
+                    {
+                        type: 'input',
+                        name: 'first_name',
+                        message: 'What is the first name of the employee?'
+                    },
+                    {
+                        type: 'input',
+                        name: 'last_name',
+                        message: 'What is the last name of the employee?'
+                    },
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'What is the role of the employee?',
+                        choices: roles
+                    },
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: 'Who is the manager of the employee?',
+                        choices: managers
+                    }
+                ])
+                .then((answers) => {
+                    connection.query('SELECT id FROM role WHERE title = ?', [answers.role], (err, res) => {
+                        if (err) throw err;
+                        let role_id = res[0].id;
+                    
+                        connection.query('SELECT id FROM employee WHERE first_name = ? AND last_name = ?', [answers.manager.split(' ')[0], answers.manager.split(' ')[1]], (err, res) => {
+                            if (err) throw err;
+                            let manager_id = res[0].id;
+
+                            connection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [answers.first_name, answers.last_name, role_id, manager_id], (err, res) => {
+                                if (err) throw err;
+                                console.log('Employee added');
+                                setTimeout(viewAllEmployees, 1000);
+                            });
+                        });
+                    })
+                });
+        })
+    })
+};
+
+quit = () => {
+    connection.end();
+    process.exit();
+}
 
 
 inquire = () => {
@@ -160,4 +225,4 @@ returnPrompt = () => {
         });
 };
 
-// inquire();
+inquire();
