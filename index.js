@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const fs = require('fs');
+const { up } = require('inquirer/lib/utils/readline');
 require('dotenv').config();
 
 const connection = mysql.createConnection({
@@ -150,6 +151,48 @@ addEmployee = () => {
                 });
         })
     })
+};
+
+updateEmployeeRole = () => {
+    connection.query('SELECT first_name, last_name FROM employee', (err, res) => {
+        if (err) throw err;
+
+        let employees = res.map(employee => employee.first_name + ' ' + employee.last_name);
+
+        connection.query('SELECT title FROM role', (err, res) => {
+            if (err) throw err;
+
+            let roles = res.map(role => role.title);
+
+            inquirer
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'employee',
+                        message: 'Which employee would you like to update?',
+                        choices: employees
+                    },
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'What is the new role of the employee?',
+                        choices: roles
+                    }
+                ])
+                .then((answers) => {
+                    connection.query('SELECT id FROM role WHERE title = ?', [answers.role], (err, res) => {
+                        if (err) throw err;
+                        let role_id = res[0].id;
+
+                        connection.query('UPDATE employee SET role_id = ? WHERE first_name = ? AND last_name = ?', [role_id, answers.employee.split(' ')[0], answers.employee.split(' ')[1]], (err, res) => {
+                            if (err) throw err;
+                            console.log('Employee role updated');
+                            setTimeout(viewAllEmployees, 1000);
+                        });
+                    });
+                });
+        });
+    });
 };
 
 quit = () => {
