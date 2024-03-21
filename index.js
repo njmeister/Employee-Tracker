@@ -33,12 +33,114 @@ viewAllRoles = () => {
 
 //Pulls all employees from the database via the queries.sql file
 viewAllEmployees = () => {
-    connection.query(queries[2], (err, res) => {
+    connection.query(queries[3], (err, res) => {
         if (err) throw err;
         console.table(res);
-        returnPrompt();
+        orderPrompt();
     });
 }
+
+//Pulls all employees from the database and orders them by manager
+orderByManager = () => {
+    connection.query(queries[4], (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        orderPrompt();
+    });
+};
+
+//Pulls all employees from the database and orders them by department
+orderByDepartment = () => {
+    connection.query(queries[5], (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        orderPrompt();
+    });
+};
+
+//Prompts the user for how they would like to order the employees
+orderPrompt = () => {
+    inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'order',
+                message: 'Choose an option to order the employees by:',
+                choices: [
+                    'Manager',
+                    'Department',
+                    'ID',
+                    'Return'
+                ]
+            }
+        ])
+        .then((answers) => {
+            switch (answers.order) {
+                case 'Manager':
+                    orderByManager();
+                    break;
+                case 'Department':
+                    orderByDepartment();
+                    break;
+                case 'ID':
+                    viewAllEmployees();
+                    break;
+                case 'Return':
+                    inquire();
+                    break;
+            }
+        });
+};
+
+viewByManager = () => {
+    connection.query('SELECT first_name, last_name FROM employee', (err, res) => {
+        if (err) throw err;
+
+        let managers = res.map(manager => manager.first_name + ' ' + manager.last_name);
+    
+        inquirer
+            .prompt([
+                {
+                    type: 'list',
+                    name: 'manager',
+                    message: 'Which manager would you like to view employees for?',
+                    choices: managers
+                }
+            ])
+            .then((answers) => {
+                connection.query(queries[6], [answers.manager], (err, res) => {
+                    if (err) throw err;
+                    console.table(res);
+                    returnPrompt();
+                });
+            });
+    });
+};
+
+viewByDepartment = () => {
+    connection.query('SELECT name FROM department', (err, res) => {
+        if (err) throw err;
+
+        let departments = res.map(department => department.name);
+    
+        inquirer
+            .prompt([
+                {
+                    type: 'list',
+                    name: 'department',
+                    message: 'Which department would you like to view employees for?',
+                    choices: departments
+                }
+            ])
+            .then((answers) => {
+                connection.query(queries[7], [answers.department], (err, res) => {
+                    if (err) throw err;
+                    console.table(res);
+                    returnPrompt();
+                });
+            });
+    });
+};
 
 //Adds a department to the database
 addDepartment = () => {
@@ -60,6 +162,35 @@ addDepartment = () => {
                 setTimeout(viewAllDepartments, 1000);
             });
         })
+};
+
+deleteDepartment = () => {
+    connection.query('SELECT name FROM department', (err, res) => {
+        if (err) throw err;
+
+        let departments = res.map(department => department.name);
+
+        inquirer
+            .prompt([
+                {
+                    type: 'list',
+                    name: 'name',
+                    message: 'Which department would you like to delete?',
+                    choices: departments
+                }
+            ])
+            .then((answers) => {
+                connection.query(queries[8], [answers.name], (err, res) => {
+                    if (err) throw err;
+
+                    connection.query(queries[9], [answers.name], (err, res) => {
+                        if (err) throw err;
+                        console.log('Department deleted');
+                        setTimeout(viewAllDepartments, 1000);
+                    });
+                });
+            });
+    });
 };
 
 //Adds a role to the database
@@ -104,6 +235,35 @@ addRole = () => {
                 });
             });
         })
+    });
+};
+
+deleteRole = () => {
+    connection.query('SELECT title FROM role', (err, res) => {
+        if (err) throw err;
+
+        let roles = res.map(role => role.title);
+
+        inquirer
+            .prompt([
+                {
+                    type: 'list',
+                    name: 'title',
+                    message: 'Which role would you like to delete?',
+                    choices: roles
+                }
+            ])
+            .then((answers) => {
+                connection.query(queries[10], [answers.title], (err, res) => {
+                    if (err) throw err;
+
+                    connection.query(queries[11], [answers.title], (err, res) => {
+                        if (err) throw err;
+                        console.log('Role deleted');
+                        setTimeout(viewAllRoles, 1000);
+                    });
+                });
+            });
     });
 };
 
@@ -226,6 +386,31 @@ updateEmployeeRole = () => {
     });
 };
 
+deleteEmployee = () => {
+    connection.query('SELECT first_name, last_name FROM employee', (err, res) => {
+        if (err) throw err;
+
+        let employees = res.map(employee => employee.first_name + ' ' + employee.last_name);
+
+        inquirer
+            .prompt([
+                {
+                    type: 'list',
+                    name: 'name',
+                    message: 'Which employee would you like to delete?',
+                    choices: employees
+                }
+            ])
+            .then((answers) => {
+                connection.query(queries[12], [answers.name.split(' ')[0], answers.name.split(' ')[1]], (err, res) => {
+                    if (err) throw err;
+                    console.log('Employee deleted');
+                    setTimeout(viewAllEmployees, 1000);
+                });
+            });
+    });
+};
+
 //Quits the application
 quit = () => {
     connection.end();
@@ -242,12 +427,17 @@ inquire = () => {
                 message: 'What would you like to do?',
                 choices: [
                     'View All Employees',
+                    'View Employees by Manager',
+                    'View Employees by Department',
                     'Add Employee',
                     'Update Employee Role',
+                    'Delete Employee',
                     'View All Roles',
                     'Add Role',
+                    'Delete Role',
                     'View All Departments',
                     'Add Department',
+                    'Delete Department',
                     'Quit'
                 ]
             }
@@ -257,11 +447,20 @@ inquire = () => {
                 case 'View All Employees':
                     viewAllEmployees();
                     break;
+                case 'View Employees by Manager':
+                    viewByManager();
+                    break;
+                case 'View Employees by Department':
+                    viewByDepartment();
+                    break;
                 case 'Add Employee':
                     addEmployee();
                     break;
                 case 'Update Employee Role':
                     updateEmployeeRole();
+                    break;
+                case 'Delete Employee':
+                    deleteEmployee();
                     break;
                 case 'View All Roles':
                     viewAllRoles();
@@ -269,11 +468,17 @@ inquire = () => {
                 case 'Add Role':
                     addRole();
                     break;
+                case 'Delete Role':
+                    deleteRole();
+                    break;
                 case 'View All Departments':
                     viewAllDepartments();
                     break;
                 case 'Add Department':
                     addDepartment();
+                    break;
+                case 'Delete Department':
+                    deleteDepartment();
                     break;
                 case 'Quit':
                     quit();
