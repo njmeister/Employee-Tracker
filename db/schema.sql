@@ -1,13 +1,17 @@
+-- Clear the database
 DROP DATABASE IF EXISTS employee_db;
 CREATE DATABASE employee_db;
 
+-- Select the database
 USE employee_db;
 
+-- Create the department table
 CREATE TABLE department (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(30)
 );
 
+-- Create the role table
 CREATE TABLE role (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(30),
@@ -17,6 +21,7 @@ CREATE TABLE role (
     REFERENCES department(id)
 );
 
+-- Create the employee table
 CREATE TABLE employee (
     id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(30),

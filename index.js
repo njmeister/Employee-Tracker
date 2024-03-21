@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const fs = require('fs');
 require('dotenv').config();
 
+//Connect to the SQL database using the dotenv package to store sensitive data
 const connection = mysql.createConnection({
     host: 'localhost',
     database: process.env.DB_NAME,
@@ -12,6 +13,7 @@ const connection = mysql.createConnection({
 
 const queries = fs.readFileSync('./db/queries.sql', 'utf8').split(';');
 
+//Pulls all departments from the database via the queries.sql file
 viewAllDepartments = () => {
     connection.query(queries[0], (err, res) => {
         if (err) throw err;
@@ -20,6 +22,7 @@ viewAllDepartments = () => {
     });
 };
 
+//Pulls all roles from the database via the queries.sql file
 viewAllRoles = () => {
     connection.query(queries[1], (err, res) => {
         if (err) throw err;
@@ -28,6 +31,7 @@ viewAllRoles = () => {
     });
 }
 
+//Pulls all employees from the database via the queries.sql file
 viewAllEmployees = () => {
     connection.query(queries[2], (err, res) => {
         if (err) throw err;
@@ -36,7 +40,9 @@ viewAllEmployees = () => {
     });
 }
 
+//Adds a department to the database
 addDepartment = () => {
+    //Prompts the user for the name of the department
     inquirer
         .prompt([
             {
@@ -46,21 +52,25 @@ addDepartment = () => {
             }
         ])
         .then((answers) => {
+            //Inserts the department into the database
             connection.query('INSERT INTO department (name) VALUES (?)', [answers.name], (err, res) => {
                 if (err) throw err;
                 console.log('Department added');
+                //Calls the viewAllDepartments function to display the updated list of departments
                 setTimeout(viewAllDepartments, 1000);
             });
         })
 };
 
+//Adds a role to the database
 addRole = () => {
+    //Pulls all departments from the database to use as choices
     connection.query('SELECT name FROM department', (err, res) => {
         if (err) throw err;
 
         let departments = res.map(department => department.name);
 
-
+        //Prompts the user for the title, salary, and department of the role
     inquirer
         .prompt([
             {
@@ -81,13 +91,15 @@ addRole = () => {
             }
         ])
         .then((answers) => {
+            //Gets the department id from the department name
             connection.query('SELECT id FROM department WHERE name = ?', [answers.department], (err, res) => {
                 if (err) throw err;
                 let department_id = res[0].id;
-
+                //Inserts the role into the database
                 connection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [answers.title, answers.salary, department_id], (err, res) => {
                     if (err) throw err;
                     console.log('Role added');
+                    //Calls the viewAllRoles function to display the updated list of roles
                     setTimeout(viewAllRoles, 1000);
                 });
             });
@@ -95,17 +107,19 @@ addRole = () => {
     });
 };
 
+//Adds an employee to the database
 addEmployee = () => {
+    //Pulls all roles from the database to use as choices
     connection.query('SELECT title FROM role', (err, res) => {
         if (err) throw err;
         
         let roles = res.map(role => role.title);
-
+        //Pulls all employees from the database to use as choices for the manager
         connection.query('SELECT first_name, last_name FROM employee', (err, res) => {
             if (err) throw err;
 
             let managers = res.map(manager => manager.first_name + ' ' + manager.last_name);
-
+            //Prompts the user for the first name, last name, role, and manager of the employee
             inquirer
                 .prompt([
                     {
@@ -132,17 +146,19 @@ addEmployee = () => {
                     }
                 ])
                 .then((answers) => {
+                    //Gets the role id from the role title
                     connection.query('SELECT id FROM role WHERE title = ?', [answers.role], (err, res) => {
                         if (err) throw err;
                         let role_id = res[0].id;
-                    
+                        //Gets the manager id from the manager name
                         connection.query('SELECT id FROM employee WHERE first_name = ? AND last_name = ?', [answers.manager.split(' ')[0], answers.manager.split(' ')[1]], (err, res) => {
                             if (err) throw err;
                             let manager_id = res[0].id;
-
+                            //Inserts the employee into the database
                             connection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [answers.first_name, answers.last_name, role_id, manager_id], (err, res) => {
                                 if (err) throw err;
                                 console.log('Employee added');
+                                //Calls the viewAllEmployees function to display the updated list of employees
                                 setTimeout(viewAllEmployees, 1000);
                             });
                         });
@@ -152,12 +168,71 @@ addEmployee = () => {
     })
 };
 
+//Updates the role and manager of an employee
+updateEmployeeRole = () => {
+    //Pulls all employees from the database to use as choices
+    connection.query('SELECT first_name, last_name FROM employee', (err, res) => {
+        if (err) throw err;
+
+        let employees = res.map(employee => employee.first_name + ' ' + employee.last_name);
+        //Pulls all roles from the database to use as choices
+        connection.query('SELECT title FROM role', (err, res) => {
+            if (err) throw err;
+
+            let roles = res.map(role => role.title);
+            //Prompts the user for the employee, role, and manager
+            inquirer
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'employee',
+                        message: 'Which employee would you like to update?',
+                        choices: employees
+                    },
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'What is the new role of the employee?',
+                        choices: roles
+                    },
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: 'Who is the new manager of the employee?',
+                        choices: employees
+                    }
+                ])
+                .then((answers) => {
+                    //Gets the role id from the role title
+                    connection.query('SELECT id FROM role WHERE title = ?', [answers.role], (err, res) => {
+                        if (err) throw err;
+                        let role_id = res[0].id;
+                        //Gets the manager id from the manager name
+                        connection.query('SELECT id FROM employee WHERE first_name = ? AND last_name = ?', [answers.manager.split(' ')[0], answers.manager.split(' ')[1]], (err, res) => {
+                            if (err) throw err;
+                            let manager_id = res[0].id;
+
+                            //Updates the employee in the database
+                            connection.query('UPDATE employee SET role_id = ?, manager_id = ? WHERE first_name = ? AND last_name = ?', [role_id, manager_id, answers.employee.split(' ')[0], answers.employee.split(' ')[1]], (err, res) => {
+                                if (err) throw err;
+                                console.log('Employee role updated');
+                                //Calls the viewAllEmployees function to display the updated list of employees
+                                setTimeout(viewAllEmployees, 1000);
+                            });
+                        });
+                    });
+                });
+        });
+    });
+};
+
+//Quits the application
 quit = () => {
     connection.end();
     process.exit();
 }
 
-
+//Main function that prompts the user for what they would like to do
 inquire = () => {
     inquirer
         .prompt([
@@ -207,6 +282,7 @@ inquire = () => {
         });
 };
 
+//Prompts the user if they would like to return to the main menu
 returnPrompt = () => {
     inquirer
         .prompt([
