@@ -11,7 +11,10 @@ const connection = mysql.createConnection({
     password: process.env.DB_PASSWORD,
 });
 
+const schema = fs.readFileSync('./db/schema.sql', 'utf8');
+const seeds = fs.readFileSync('./db/seeds.sql', 'utf8');
 const queries = fs.readFileSync('./db/queries.sql', 'utf8').split(';');
+
 
 //Pulls all departments from the database via the queries.sql file
 viewAllDepartments = () => {
@@ -164,7 +167,9 @@ addDepartment = () => {
         })
 };
 
+//Deletes a department from the database
 deleteDepartment = () => {
+    //Pulls all departments from the database to use as choices
     connection.query('SELECT name FROM department', (err, res) => {
         if (err) throw err;
 
@@ -180,9 +185,11 @@ deleteDepartment = () => {
                 }
             ])
             .then((answers) => {
+                //Sets the department to null for all employees in the department
                 connection.query(queries[8], [answers.name], (err, res) => {
                     if (err) throw err;
 
+                    //Deletes the department from the database
                     connection.query(queries[9], [answers.name], (err, res) => {
                         if (err) throw err;
                         console.log('Department deleted');
@@ -238,7 +245,9 @@ addRole = () => {
     });
 };
 
+//Deletes a role from the database
 deleteRole = () => {
+    //Pulls all roles from the database to use as choices
     connection.query('SELECT title FROM role', (err, res) => {
         if (err) throw err;
 
@@ -254,9 +263,11 @@ deleteRole = () => {
                 }
             ])
             .then((answers) => {
+                //Sets the role to null for all employees with the role
                 connection.query(queries[10], [answers.title], (err, res) => {
                     if (err) throw err;
 
+                    //Deletes the role from the database
                     connection.query(queries[11], [answers.title], (err, res) => {
                         if (err) throw err;
                         console.log('Role deleted');
@@ -302,7 +313,7 @@ addEmployee = () => {
                         type: 'list',
                         name: 'manager',
                         message: 'Who is the manager of the employee?',
-                        choices: managers
+                        choices: [...managers, 'null']
                     }
                 ])
                 .then((answers) => {
@@ -386,30 +397,6 @@ updateEmployeeRole = () => {
     });
 };
 
-deleteEmployee = () => {
-    connection.query('SELECT first_name, last_name FROM employee', (err, res) => {
-        if (err) throw err;
-
-        let employees = res.map(employee => employee.first_name + ' ' + employee.last_name);
-
-        inquirer
-            .prompt([
-                {
-                    type: 'list',
-                    name: 'name',
-                    message: 'Which employee would you like to delete?',
-                    choices: employees
-                }
-            ])
-            .then((answers) => {
-                connection.query(queries[12], [answers.name.split(' ')[0], answers.name.split(' ')[1]], (err, res) => {
-                    if (err) throw err;
-                    console.log('Employee deleted');
-                    setTimeout(viewAllEmployees, 1000);
-                });
-            });
-    });
-};
 
 //Quits the application
 quit = () => {
@@ -431,7 +418,6 @@ inquire = () => {
                     'View Employees by Department',
                     'Add Employee',
                     'Update Employee Role',
-                    'Delete Employee',
                     'View All Roles',
                     'Add Role',
                     'Delete Role',
@@ -458,9 +444,6 @@ inquire = () => {
                     break;
                 case 'Update Employee Role':
                     updateEmployeeRole();
-                    break;
-                case 'Delete Employee':
-                    deleteEmployee();
                     break;
                 case 'View All Roles':
                     viewAllRoles();
@@ -506,4 +489,33 @@ returnPrompt = () => {
         });
 };
 
-inquire();
+startUp = () => {
+    console.log('Welcome to the Employee Tracker!');
+
+    // Check if the employees table is empty
+    connection.query('SELECT COUNT(*) AS count FROM employee', (err, results) => {
+        if (err) throw err;
+
+        // If the employees table is empty, seed the database
+        if (results[0].count === 0) {
+            connection.query(seeds, (err, res) => {
+                if (err) throw err;
+            });
+        }
+    });
+
+    // Clear view from database
+    connection.query('DROP VIEW IF EXISTS employee_view', (err, res) => {
+        if (err) throw err;
+    });
+
+    //Creates the employee view in the database
+    connection.query(queries[2], (err, res) => {
+        if (err) throw err;
+    });
+
+    setTimeout(inquire, 1000);
+};
+
+
+startUp();

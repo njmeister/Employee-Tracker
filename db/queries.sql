@@ -37,8 +37,3 @@ DELETE FROM department WHERE name = ?;
 -- Delete a role
 UPDATE employee SET role_id = null WHERE role_id IN (SELECT id FROM role WHERE title = ?);
 DELETE FROM role WHERE title = ?;
-
--- Delete an employee
-UPDATE employee SET manager_id = null WHERE manager_id IN (SELECT id FROM employee WHERE first_name = ? AND last_name = ?);
-DELETE FROM employee WHERE first_name = ? AND last_name = ?;
-
