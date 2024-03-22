@@ -2,6 +2,7 @@
 DROP DATABASE IF EXISTS employee_db;
 CREATE DATABASE employee_db;
 
+
 -- Select the database
 USE employee_db;
 
@@ -33,3 +34,6 @@ CREATE TABLE employee (
     FOREIGN KEY (manager_id)
     REFERENCES employee(id)
 );
+
+-- Clear the view
+DROP VIEW IF EXISTS employee_view;
