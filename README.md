@@ -21,22 +21,28 @@ This is my submission for the Employee Tracker challenge in the UTA/EdX Coding B
 
 Start the program with the command `node index.js.`
 
-The program presents the user with a list of its functions:  <br/> <br/>
-    'View All Employees',   
-                    'View Employees by Manager',   
-                    'View Employees by Department',   
-                    'Add Employee',   
-                    'Update Employee Role',   
-                    'View All Roles',   
-                    'Add Role',   
-                    'Delete Role',   
-                    'View All Departments',   
-                    'Add Department',   
-                    'Delete Department',   
-After finishing any of the functions, the program presents a 'Return' option. Choosing yes brings the main list of functions back up for selection while choosing no quits the program.   
+The program presents the user with a list of its functions:
+
+    View All Employees,   
+    View Employees by Manager,   
+    View Employees by Department,   
+    Add Employee,   
+    Update Employee Role,   
+    View All Roles,   
+    Add Role,   
+    Delete Role,   
+    View All Departments,   
+    Add Department,   
+    Delete Department,   
+    
+After finishing any of the functions, the program presents a 'Return' option. Choosing yes brings the main list of functions back up for selection while choosing no quits the program.
+
 Choosing any 'view' option will pull up a table with the appropriate information from the database. The 'View All Employees' function also has sub-options to order the table.   
+
 Choosing any 'add' or 'update' option will pull up a series of inquirer prompts to collect entries for each column of the chosen table. Once they have all been answered, the program will display the updated table.   
+
 Choosing any 'delete' option will pull up a list of entries for the respective table. Selecting one will remove it from the database. The program then displays the updated table.   
+
 Choosing 'quit' stops the program.  
 
 
