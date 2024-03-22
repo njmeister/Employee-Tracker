@@ -22,9 +22,9 @@ This is my submission for the Employee Tracker challenge in the UTA/EdX Coding B
 Start the program with the command `node index.js.`
 
 The program presents the user with a list of its functions:  
-                    *'View All Employees',   
-                    *'View Employees by Manager',   
-                    *'View Employees by Department',   
+    'View All Employees',   
+                    'View Employees by Manager',   
+                    'View Employees by Department',   
                     'Add Employee',   
                     'Update Employee Role',   
                     'View All Roles',   
